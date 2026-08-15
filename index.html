@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro - Vision-to-Code Engine</title>
+    <title>Viziahub Pro - Auto-Failover Vision Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-950 text-white min-h-screen p-4 flex flex-col justify-between">
@@ -11,7 +11,7 @@
     <div class="max-w-xl mx-auto w-full space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">VISION AI ENGINE</span></h1>
+            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">AUTO-FAILOVER ENGINE</span></h1>
             <button onclick="toggleSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-cyan-400 font-bold flex items-center gap-1">
                 ⚙️ Settings
             </button>
@@ -38,7 +38,7 @@
             
             <div class="flex flex-col gap-2">
                 <button onclick="generateAndDeployPackage()" id="buildBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition duration-200 text-sm shadow-lg shadow-cyan-500/20">
-                    🚀 Build via Vision AI & Trigger Pipeline
+                    🚀 Build via Smart Vision AI & Trigger Pipeline
                 </button>
                 
                 <!-- Real GitHub Actions APK Download Button -->
@@ -50,7 +50,7 @@
 
         <!-- Status & Progress Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center space-y-3">
-            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Vision Engine Ready</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Smart Engine Ready</p>
             
             <!-- Progress Bar -->
             <div class="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-gray-800">
@@ -98,10 +98,18 @@
 
     <!-- Footer Note -->
     <footer class="text-center text-gray-600 text-[10px] mt-6">
-        Viziahub Native Wrapper Engine • Vision-to-Code UI Replicator
+        Viziahub Native Wrapper Engine • Smart Auto-Failover Edition
     </footer>
 
     <script>
+        // --- ALL VISION MODELS LIST FOR AUTO-FAILOVER ---
+        const visionModels = [
+            "meta-llama/llama-4-99b-vision-instruct",
+            "llama-3.2-90b-vision-preview",
+            "meta-llama/llama-4-11b-vision-instruct",
+            "llama-3.2-11b-vision-preview"
+        ];
+
         let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
         let ghToken = localStorage.getItem('viz_gh_token') || '';
         let ghUser = localStorage.getItem('viz_gh_user') || '';
@@ -153,12 +161,10 @@
             const dlBtn = document.getElementById('downloadApkBtn');
             if(ghUser && ghRepoName) {
                 dlBtn.href = `https://github.com/${ghUser}/${ghRepoName}/actions`;
-                dlBtn.classList.print = '';
                 dlBtn.classList.remove('hidden');
             }
         }
 
-        // Convert uploaded image file to Base64
         function convertImageToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -166,6 +172,42 @@
                 reader.onerror = error => reject(error);
                 reader.readAsDataURL(file);
             });
+        }
+
+        // --- SMART AUTO-FAILOVER API CALL FUNCTION ---
+        async function callVisionModelWithFallback(messagesContent, modelIndex = 0) {
+            if (modelIndex >= visionModels.length) {
+                throw new Error("सारे विजन मॉडल फेल हो गए या डीकमीशन हो चुके हैं!");
+            }
+
+            const selectedModel = visionModels[modelIndex];
+            document.getElementById('statusText').innerText = `🔄 Trying model: ${selectedModel}...`;
+
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        messages: messagesContent,
+                        temperature: 0.7,
+                        max_tokens: 4096
+                    })
+                });
+
+                const data = await response.json();
+                
+                // अगर मॉडल एरर दे या काम न करे, तो ऑटोमैटिकली अगले मॉडल पर स्विच हो जाओ
+                if (data.error || !data.choices) {
+                    console.warn(`Model ${selectedModel} failed:`, data.error ? data.error.message : "Unknown error");
+                    return await callVisionModelWithFallback(messagesContent, modelIndex + 1);
+                }
+
+                return data; // सक्सेस मिलने पर डेटा रिटर्न कर देगा
+            } catch (error) {
+                console.warn(`Network/Fetch error with model ${selectedModel}. Switching...`);
+                return await callVisionModelWithFallback(messagesContent, modelIndex + 1);
+            }
         }
 
         async function generateAndDeployPackage() {
@@ -194,19 +236,15 @@
                 if (width < 90) {
                     width++;
                     progressBar.style.width = width + "%";
-                    status.innerText = `🔍 Vision AI Analyzing Screenshot & Code (${width}%)`;
+                    status.innerText = `🔍 Smart Vision AI Processing (${width}%)`;
                 }
             }, 800);
 
             try {
                 let messagesContent = [];
-                let selectedModel = "llama-3.3-70b-versatile";
 
-                // If image is uploaded, use Vision Model & Base64 payload
                 if (imageFile) {
-                    selectedModel = "llama-3.2-11b-vision-preview";
                     const base64Image = await convertImageToBase64(imageFile);
-                    
                     messagesContent = [
                         {
                             role: "user",
@@ -223,7 +261,6 @@
                         }
                     ];
                 } else {
-                    // Standard Text Prompt with strict 4-column layout rule
                     messagesContent = [
                         {
                             role: "system",
@@ -236,19 +273,8 @@
                     ];
                 }
 
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
-                    body: JSON.stringify({
-                        model: selectedModel,
-                        messages: messagesContent,
-                        temperature: 0.7,
-                        max_tokens: 4096
-                    })
-                });
-
-                const data = await response.json();
-                if(data.error) throw new Error(data.error.message || "Groq Vision API Error");
+                // यहाँ ऑटो-फ़ेलओवर फ़ंक्शन कॉल हो रहा है जो सही मॉडल खुद ढूँढ लेगा
+                const data = await callVisionModelWithFallback(messagesContent);
 
                 let rawHtml = data.choices[0].message.content;
                 appFiles.indexHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
@@ -275,7 +301,6 @@
                 localStorage.setItem('viz_settings_gradle', appFiles.settingsGradle);
                 localStorage.setItem('viz_build_yml', appFiles.buildYml);
 
-                // Optional Custom File Generation if Path provided
                 let customFileContent = "";
                 if(customPath) {
                     status.innerText = `✨ Generating custom file at path: ${customPath}...`;
@@ -298,12 +323,12 @@
                 }
 
                 // Push to GitHub
-                status.innerText = "☁️ Pushing Vision-fixed files to GitHub...";
+                status.innerText = "☁️ Pushing files to GitHub...";
                 await pushFilesToGitHub(customPath, customFileContent);
 
                 clearInterval(progressInterval);
                 progressBar.style.width = "100%";
-                status.innerText = "✅ Pipeline Triggered! Vision AI has fixed and deployed all buttons.";
+                status.innerText = "✅ Pipeline Triggered! App successfully built and deployed.";
                 document.getElementById('previewContainer').classList.remove('hidden');
                 showRealDownloadButton();
 
@@ -319,7 +344,7 @@
         async function pushFilesToGitHub(customPath, customContent) {
             const repo = `${ghUser}/${ghRepoName}`;
             
-            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update index.html via Vision AI");
+            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update index.html via Smart Vision AI");
             await uploadFile(repo, "app/src/main/AndroidManifest.xml", appFiles.androidManifest, "Update AndroidManifest.xml");
             await uploadFile(repo, "app/src/main/java/com/viziahub/app/MainActivity.java", appFiles.mainActivity, "Update MainActivity.java");
             await uploadFile(repo, "app/build.gradle", appFiles.buildGradleApp, "Update app-level build.gradle");
