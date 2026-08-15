@@ -17,7 +17,7 @@
 
         <!-- Prompt Input -->
         <label class="block text-sm font-medium text-slate-300 mb-2">App Description & Features</label>
-        <textarea id="aiPrompt" class="w-full h-36 bg-slate-950 border border-slate-800 p-4 rounded-xl text-white focus:ring-2 focus:ring-cyan-500 outline-none resize-none mb-4 text-sm" placeholder="e.g. TikTok clone with vertical scrolling reels, video upload, profile page, and sound tracks..."></textarea>
+        <textarea id="aiPrompt" class="w-full h-36 bg-slate-950 border border-slate-800 p-4 rounded-xl text-white focus:ring-2 focus:ring-cyan-500 outline-none resize-none mb-4 text-sm" placeholder="e.g. TikTok clone with vertical scrolling reels, video upload, profile page..."></textarea>
         
         <!-- Build Button -->
         <button id="genBtn" onclick="buildApp()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold p-4 rounded-xl transition shadow-lg shadow-cyan-900/30 mb-4">🚀 Build & Pack Pro App</button>
@@ -81,16 +81,10 @@
             genBtn.disabled = true;
             status.innerText = "Status: Groq is crafting your high-level app...";
 
-            // दमदोर और सख्त सिस्टम प्रॉम्प्ट
-            const systemPrompt = `You are an elite senior full-stack and UI/UX app developer. Your task is to build a fully functional, stunning, high-level single-file mobile web app based on the user's request.
-CRITICAL REQUIREMENTS:
-1. You MUST include the Tailwind CSS CDN script (<script src="https://cdn.tailwindcss.com"></script>) inside the <head> of the generated HTML.
-2. Design a gorgeous, modern mobile-first interface with proper padding, smooth layouts, flex/grid alignment, and nice color schemes (no plain unstyled text or broken boxes).
-3. Embed clean, fully working vanilla JavaScript inside a <script> tag for complete interactivity (such as screen switching, data handling, scrolling, likes, uploads, etc.).
-4. Output ONLY raw, clean HTML code. Do NOT wrap the code in markdown blocks like \`\`\`html or include any conversational intro/outro text. Start directly with <!DOCTYPE html>.`;
+            const systemPrompt = "You are an elite senior full-stack and UI/UX app developer. Create a fully functional, gorgeous, professional single-file mobile web app based on the user's request. 1. You MUST include the Tailwind CSS CDN script (<script src=\"https://cdn.tailwindcss.com\"></script>) inside the <head>. 2. Design a gorgeous, modern mobile-first interface with proper styling and layout. 3. Embed clean working JavaScript for full interactivity. 4. Output ONLY raw, clean HTML code without any markdown ticks like ```html or conversational text.";
 
             try {
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const response = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -114,8 +108,6 @@ CRITICAL REQUIREMENTS:
                 }
 
                 let packedCode = data.choices[0].message.content;
-                
-                // क्लीनिंग ताकि मार्कडाउन हट जाए
                 packedCode = packedCode.replace(/```html/g, "").replace(/```/g, "").trim();
 
                 document.getElementById('masterCode').value = packedCode;
