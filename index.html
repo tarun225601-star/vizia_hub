@@ -78,17 +78,23 @@
                     </div>
                 </div>
 
-                <!-- Selected Project File Viewer -->
+                <!-- Selected Project File Viewer (Only index.html + VIP Copy Button) -->
                 <div id="projectDetailView" class="hidden border-t border-gray-800 pt-3 space-y-2">
-                    <h4 id="detailProjectTitle" class="text-xs font-bold text-emerald-400"></h4>
-                    <div class="space-y-1 text-xs">
-                        <button onclick="viewFileContent('indexHtml')" class="w-full bg-gray-950 hover:bg-gray-800 p-2 rounded border border-gray-800 text-left text-cyan-300 flex justify-between"><span>📄 index.html</span> <span>👁️ View</span></button>
-                        <button onclick="viewFileContent('androidManifest')" class="w-full bg-gray-950 hover:bg-gray-800 p-2 rounded border border-gray-800 text-left text-gray-300 flex justify-between"><span>📱 AndroidManifest.xml</span> <span>👁️ View</span></button>
-                        <button onclick="viewFileContent('mainActivity')" class="w-full bg-gray-950 hover:bg-gray-800 p-2 rounded border border-gray-800 text-left text-gray-300 flex justify-between"><span>☕ MainActivity.java</span> <span>👁️ View</span></button>
-                        <button onclick="viewFileContent('buildGradle')" class="w-full bg-gray-950 hover:bg-gray-800 p-2 rounded border border-gray-800 text-left text-gray-300 flex justify-between"><span>⚙️ build.gradle</span> <span>👁️ View</span></button>
-                        <button onclick="viewFileContent('buildYml')" class="w-full bg-gray-950 hover:bg-gray-800 p-2 rounded border border-gray-800 text-left text-gray-300 flex justify-between"><span>🚀 GitHub Actions build.yml</span> <span>👁️ View</span></button>
+                    <div class="flex justify-between items-center">
+                        <h4 id="detailProjectTitle" class="text-xs font-bold text-emerald-400"></h4>
+                        <button onclick="copyActiveCode()" id="vipCopyBtn" class="bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-gray-950 font-bold px-3 py-1 rounded-lg text-xs shadow-md transition flex items-center gap-1">
+                            📋 Copy Code
+                        </button>
                     </div>
-                    <textarea id="fileViewerCode" rows="6" readonly class="w-full bg-gray-950 font-mono text-[10px] text-gray-300 p-2 rounded border border-gray-800 mt-2 select-all" placeholder="Select a file above to view code..."></textarea>
+                    
+                    <div class="space-y-1 text-xs">
+                        <div class="w-full bg-gray-950 p-2 rounded border border-gray-800 text-left text-cyan-300 flex justify-between items-center">
+                            <span>📄 index.html</span>
+                            <span class="text-[10px] text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800">Active File</span>
+                        </div>
+                    </div>
+                    
+                    <textarea id="fileViewerCode" rows="8" readonly class="w-full bg-gray-950 font-mono text-[10px] text-gray-300 p-3 rounded-xl border border-gray-800 mt-2 select-all focus:outline-none focus:border-cyan-500" placeholder="Select a project above to view code..."></textarea>
                 </div>
             </div>
             
@@ -145,6 +151,24 @@
             alert("🔗 Instant Web Link Copied!");
         }
 
+        // VIP Copy Code Functionality
+        function copyActiveCode() {
+            const codeBox = document.getElementById('fileViewerCode');
+            if(!codeBox.value) return alert("Copy karne ke liye koi code nahi hai bhai!");
+            
+            navigator.clipboard.writeText(codeBox.value).then(() => {
+                const btn = document.getElementById('vipCopyBtn');
+                btn.innerHTML = "✅ Copied!";
+                btn.className = "bg-emerald-500 text-gray-950 font-bold px-3 py-1 rounded-lg text-xs shadow-md transition flex items-center gap-1";
+                setTimeout(() => {
+                    btn.innerHTML = "📋 Copy Code";
+                    btn.className = "bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-gray-950 font-bold px-3 py-1 rounded-lg text-xs shadow-md transition flex items-center gap-1";
+                }, 2000);
+            }).catch(err => {
+                alert("Copy karne mein error aaya!");
+            });
+        }
+
         function renderProjectList() {
             const container = document.getElementById('projectListContainer');
             const keys = Object.keys(projectsVault);
@@ -184,15 +208,6 @@
             document.getElementById('projectNameInput').value = name;
         }
 
-        function viewFile(fileKey) {
-            if(!viewingProjectData) return;
-            document.getElementById('fileViewerCode').value = viewingProjectData[fileKey] || "File not found.";
-        }
-
-        function viewFileContent(fileKey) {
-            viewFile(fileKey);
-        }
-
         function deleteProject(name) {
             if(confirm(`Delete project "${name}" from vault?`)) {
                 delete projectsVault[name];
@@ -229,7 +244,7 @@
             progressBar.style.width = width + "%";
 
             try {
-                status.innerText = `🤖 Agent: Generating "${projectName}" UI & GitHub Files...`;
+                status.innerText = `🤖 Agent: Generating "${projectName}" index.html via Groq...`;
                 width = 50; progressBar.style.width = width + "%";
 
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -252,23 +267,10 @@
                 }
 
                 const indexHtml = data.choices[0].message.content.replace(/```html/g, '').replace(/```[a-z]*/g, '').replace(/```/g, '').trim();
-                
-                // Generate native project structure files automatically for vault storage
-                const androidManifest = `<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)" package="com.viziahub.app">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="${projectName}" android:usesCleartextTraffic="true">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>`;
-                
-                const mainActivity = `package com.viziahub.app;\nimport android.os.Bundle;\nimport android.webkit.WebView;\nimport androidx.appcompat.app.AppCompatActivity;\npublic class MainActivity extends AppCompatActivity {\n    @Override protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        WebView web = new WebView(this);\n        web.getSettings().setJavaScriptEnabled(true);\n        web.loadUrl("file:///android_asset/index.html");\n        setContentView(web);\n    }\n}`;
 
-                const buildGradle = `plugins { id 'com.android.application' }\nandroid {\n    namespace 'com.viziahub.app'\n    compileSdk 34\n    defaultConfig {\n        applicationId "com.viziahub.app"\n        minSdk 21\n        targetSdk 34\n    }\n}`;
-
-                const buildYml = `name: Build APK\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@v4\n    - uses: actions/setup-java@v4\n      with: { distribution: 'temurin', java-version: '17' }\n    - run: gradle assembleDebug`;
-
-                // Save into Vault Storage
+                // Save only index.html into Vault Storage
                 projectsVault[projectName] = {
-                    indexHtml: indexHtml,
-                    androidManifest: androidManifest,
-                    mainActivity: mainActivity,
-                    buildGradle: buildGradle,
-                    buildYml: buildYml
+                    indexHtml: indexHtml
                 };
 
                 currentActiveProject = projectName;
