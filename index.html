@@ -3,85 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub - AI Engine</title>
-    <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; }
-        
-        /* Settings Modal Styling */
-        #settingsOverlay {
-            display: none; 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 999;
-            padding: 20px; box-sizing: border-box;
-        }
-        #settingsOverlay.show { display: block; }
-        
-        .modal-content { max-width: 400px; margin: 50px auto; background: #1e293b; padding: 20px; border-radius: 10px; }
-        
-        input { width: 100%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #0284c7; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 10px; }
-        .close-btn { background: #ef4444; }
-        
-        /* Main View */
-        textarea { width: 100%; height: 200px; background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 10px; margin-top: 20px; font-family: monospace; }
-    </style>
+    <title>Viziahub App Factory</title>
+    <!-- Tailwind CSS for high-level modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-950 text-white min-h-screen p-6 flex flex-col items-center">
 
-    <button onclick="toggleSettings()">⚙️ Open Settings</button>
+    <div class="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl">
+        <h1 class="text-2xl font-black text-cyan-400 mb-6 text-center">Viziahub Engine</h1>
+        
+        <!-- API Settings Button -->
+        <button onclick="toggleSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold p-3 rounded-xl mb-4 border border-slate-700 transition">⚙️ Set Grok API Key</button>
 
-    <div id="settingsOverlay">
-        <div class="modal-content">
-            <h2>Engine Settings</h2>
-            <input type="password" id="grokKey" placeholder="Grok API Key">
-            <input type="text" id="supabaseUrl" placeholder="Supabase URL">
-            <input type="password" id="supabaseKey" placeholder="Supabase Anon Key">
-            <button onclick="saveSettings()">Save & Close</button>
-            <button class="close-btn" onclick="toggleSettings()">Cancel</button>
+        <!-- Prompt Input -->
+        <label class="block text-sm font-medium text-slate-300 mb-2">App Description</label>
+        <textarea id="aiPrompt" class="w-full h-32 bg-slate-950 border border-slate-800 p-4 rounded-xl text-white focus:ring-2 focus:ring-cyan-500 outline-none resize-none mb-4" placeholder="e.g. Ek aisi app banao jisme todo list ho aur local storage me save rahe..."></textarea>
+        
+        <!-- Build Button -->
+        <button id="genBtn" onclick="buildApp()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold p-4 rounded-xl transition shadow-lg shadow-cyan-900/30 mb-4">🚀 Build & Pack App</button>
+        
+        <!-- Download Released App Button -->
+        <button id="dlBtn" onclick="downloadAppFile()" disabled class="w-full bg-emerald-600/50 text-white/50 font-bold p-4 rounded-xl cursor-not-allowed transition">📥 Download Released App (.html)</button>
+        
+        <p id="status" class="text-center mt-4 text-xs text-slate-400">Status: Ready to build</p>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm p-6 rounded-2xl">
+            <h2 class="text-lg font-bold text-cyan-400 mb-4">API Configuration</h2>
+            <input type="password" id="grokKey" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white mb-4 outline-none focus:border-cyan-500" placeholder="Paste xAI Grok API Key">
+            <button onclick="saveKey()" class="w-full bg-cyan-600 font-bold p-3 rounded-xl mb-2">Save Key</button>
+            <button onclick="toggleSettings()" class="w-full bg-slate-800 text-slate-300 p-3 rounded-xl">Close</button>
         </div>
     </div>
 
-    <h1>Viziahub AI Engine</h1>
-    <input type="text" id="aiPrompt" placeholder="What app should I build?">
-    <button onclick="generateCodeWithGrok()">Generate Code</button>
-    
-    <textarea id="masterCode" placeholder="Code will appear here..."></textarea>
-    <button onclick="downloadCode()">Download File</button>
+    <!-- Hidden Master Storage -->
+    <textarea id="masterCode" class="hidden"></textarea>
 
     <script>
+        // Load saved key on start
+        window.onload = function() {
+            if(localStorage.getItem('grok_key')) {
+                document.getElementById('grokKey').value = localStorage.getItem('grok_key');
+            }
+        }
+
         function toggleSettings() {
-            const overlay = document.getElementById('settingsOverlay');
-            overlay.classList.toggle('show');
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('hidden');
         }
 
-        function saveSettings() {
-            localStorage.setItem('grok_key', document.getElementById('grokKey').value);
-            localStorage.setItem('sup_url', document.getElementById('supabaseUrl').value);
-            localStorage.setItem('sup_key', document.getElementById('supabaseKey').value);
+        function saveKey() {
+            const key = document.getElementById('grokKey').value;
+            localStorage.setItem('grok_key', key);
+            alert("API Key Saved Successfully!");
             toggleSettings();
-            alert("Settings Saved!");
         }
 
-        // Load saved settings
-        document.getElementById('grokKey').value = localStorage.getItem('grok_key') || "";
-        document.getElementById('supabaseUrl').value = localStorage.getItem('sup_url') || "";
-        document.getElementById('supabaseKey').value = localStorage.getItem('sup_key') || "";
-
-        async function generateCodeWithGrok() {
+        async function buildApp() {
             const apiKey = localStorage.getItem('grok_key');
-            if(!apiKey) { alert("Please save API Key first!"); return; }
-            
-            // API logic same as before...
-            alert("Generating code..."); 
+            const promptText = document.getElementById('aiPrompt').value;
+            const genBtn = document.getElementById('genBtn');
+            const dlBtn = document.getElementById('dlBtn');
+            const status = document.getElementById('status');
+
+            if(!apiKey) {
+                alert("Pehle Settings me jaakar Grok API Key save karo!");
+                toggleSettings();
+                return;
+            }
+            if(!promptText) {
+                alert("Bhai, app ka idea toh likh!");
+                return;
+            }
+
+            genBtn.innerText = "Building App...";
+            genBtn.disabled = true;
+            status.innerText = "Status: Grok is packaging your app...";
+
+            // Master Prompt jo Grok ko مجبور کرےगा कि वो पूरी ऐप सिंगल फाइल में दे
+            const systemPrompt = `You are an elite master app developer. Create a complete, fully functional, high-level single-file mobile web app based on the user's request. 
+            - Use Tailwind CSS via CDN for styling.
+            - Include all CSS, JavaScript, and HTML inside a single file.
+            - Make it interactive, beautiful, and fully responsive for mobile screens.
+            - Output ONLY raw, clean HTML code. Do not include markdown ticks like \`\`\`html or any conversational text.`;
+
+            try {
+                const response = await fetch("https://api.x.ai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "grok-beta",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: promptText }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                let packedCode = data.choices[0].message.content;
+                
+                // Clean markdown if Grok accidentally adds it
+                packedCode = packedCode.replace(/```html/g, "").replace(/```/g, "").trim();
+
+                // Store in hidden area
+                document.getElementById('masterCode').value = packedCode;
+
+                // Enable Download Button
+                dlBtn.disabled = false;
+                dlBtn.classList.remove("bg-emerald-600/50", "text-white/50", "cursor-not-allowed");
+                dlBtn.classList.add("bg-emerald-600", "hover:bg-emerald-500", "shadow-lg", "shadow-emerald-900/30");
+                
+                status.innerText = "Status: App successfully released and ready!";
+            } catch (error) {
+                status.innerText = "Status Error: " + error.message;
+            } finally {
+                genBtn.innerText = "🚀 Build & Pack App";
+                genBtn.disabled = false;
+            }
         }
-        
-        function downloadCode() {
+
+        function downloadAppFile() {
             const code = document.getElementById('masterCode').value;
-            const blob = new Blob([code], {type: 'text/html'});
+            if(!code) {
+                alert("Pehle app build toh karo!");
+                return;
+            }
+
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "app.html";
+            a.href = url;
+            a.download = "Viziahub_App.html";
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
         }
     </script>
 </body>
