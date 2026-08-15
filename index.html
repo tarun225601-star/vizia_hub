@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro - Auto-Failover Vision Engine</title>
+    <title>Viziahub Pro - 70B Exclusive Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-950 text-white min-h-screen p-4 flex flex-col justify-between">
@@ -11,22 +11,22 @@
     <div class="max-w-xl mx-auto w-full space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">AUTO-FAILOVER ENGINE</span></h1>
+            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-red-900 px-2 py-1 rounded">70B EXCLUSIVE ENGINE</span></h1>
             <button onclick="toggleSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-cyan-400 font-bold flex items-center gap-1">
                 ⚙️ Settings
             </button>
         </div>
 
-        <!-- Prompt Box & Image Upload for Vision -->
+        <!-- Prompt Box & Image Upload -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-2xl space-y-4">
             <div>
                 <label class="block text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">App Idea / Instructions</label>
-                <textarea id="promptInput" rows="2" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Fix this calculator, add all missing +/-/*// buttons based on screenshot..."></textarea>
+                <textarea id="promptInput" rows="2" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Write code or instructions here..."></textarea>
             </div>
 
-            <!-- Image Upload for Vision Analysis -->
+            <!-- Image Upload (Optional) -->
             <div>
-                <label class="block text-xs uppercase tracking-widest text-emerald-400 font-bold mb-1">📸 Upload UI Screenshot (Optional for Vision-to-Code):</label>
+                <label class="block text-xs uppercase tracking-widest text-emerald-400 font-bold mb-1">📸 Upload Screenshot (Optional):</label>
                 <input type="file" id="imageInput" accept="image/*" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-500 cursor-pointer">
             </div>
 
@@ -38,7 +38,7 @@
             
             <div class="flex flex-col gap-2">
                 <button onclick="generateAndDeployPackage()" id="buildBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition duration-200 text-sm shadow-lg shadow-cyan-500/20">
-                    🚀 Build via Smart Vision AI & Trigger Pipeline
+                    🚀 Build via 70B Engine & Trigger Pipeline
                 </button>
                 
                 <!-- Real GitHub Actions APK Download Button -->
@@ -50,7 +50,7 @@
 
         <!-- Status & Progress Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center space-y-3">
-            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Smart Engine Ready</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - 70B Engine Ready</p>
             
             <!-- Progress Bar -->
             <div class="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-gray-800">
@@ -98,17 +98,12 @@
 
     <!-- Footer Note -->
     <footer class="text-center text-gray-600 text-[10px] mt-6">
-        Viziahub Native Wrapper Engine • Smart Auto-Failover Edition
+        Viziahub Native Wrapper Engine • 70B Exclusive Edition
     </footer>
 
     <script>
-        // --- ALL VISION MODELS LIST FOR AUTO-FAILOVER ---
-        const visionModels = [
-            "meta-llama/llama-4-99b-vision-instruct",
-            "llama-3.2-90b-vision-preview",
-            "meta-llama/llama-4-11b-vision-instruct",
-            "llama-3.2-11b-vision-preview"
-        ];
+        // --- ONLY 70B VERSATILE MODEL ---
+        const SELECTED_MODEL = "llama-3.3-70b-versatile";
 
         let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
         let ghToken = localStorage.getItem('viz_gh_token') || '';
@@ -165,58 +160,12 @@
             }
         }
 
-        function convertImageToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // --- SMART AUTO-FAILOVER API CALL FUNCTION ---
-        async function callVisionModelWithFallback(messagesContent, modelIndex = 0) {
-            if (modelIndex >= visionModels.length) {
-                throw new Error("सारे विजन मॉडल फेल हो गए या डीकमीशन हो चुके हैं!");
-            }
-
-            const selectedModel = visionModels[modelIndex];
-            document.getElementById('statusText').innerText = `🔄 Trying model: ${selectedModel}...`;
-
-            try {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
-                    body: JSON.stringify({
-                        model: selectedModel,
-                        messages: messagesContent,
-                        temperature: 0.7,
-                        max_tokens: 4096
-                    })
-                });
-
-                const data = await response.json();
-                
-                // अगर मॉडल एरर दे या काम न करे, तो ऑटोमैटिकली अगले मॉडल पर स्विच हो जाओ
-                if (data.error || !data.choices) {
-                    console.warn(`Model ${selectedModel} failed:`, data.error ? data.error.message : "Unknown error");
-                    return await callVisionModelWithFallback(messagesContent, modelIndex + 1);
-                }
-
-                return data; // सक्सेस मिलने पर डेटा रिटर्न कर देगा
-            } catch (error) {
-                console.warn(`Network/Fetch error with model ${selectedModel}. Switching...`);
-                return await callVisionModelWithFallback(messagesContent, modelIndex + 1);
-            }
-        }
-
         async function generateAndDeployPackage() {
             const promptText = document.getElementById('promptInput').value.trim();
-            const imageFile = document.getElementById('imageInput').files[0];
             const customPath = document.getElementById('customPathInput').value.trim();
 
-            if(!promptText && !imageFile) {
-                alert("Pehle prompt ya screenshot image daal bhai!");
+            if(!promptText) {
+                alert("Pehle prompt ya instruction daal bhai!");
                 return;
             }
             if(!groqApiKey || !ghToken || !ghUser || !ghRepoName) {
@@ -236,45 +185,38 @@
                 if (width < 90) {
                     width++;
                     progressBar.style.width = width + "%";
-                    status.innerText = `🔍 Smart Vision AI Processing (${width}%)`;
+                    status.innerText = `🔍 70B Engine Processing (${width}%)`;
                 }
-            }, 800);
+            }, 600);
 
             try {
-                let messagesContent = [];
+                const messagesContent = [
+                    {
+                        role: "system",
+                        content: "You are an expert mobile app UI designer. Create a fully self-contained, responsive HTML/JS app using Tailwind CSS via CDN. Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown blocks."
+                    },
+                    {
+                        role: "user",
+                        content: promptText
+                    }
+                ];
 
-                if (imageFile) {
-                    const base64Image = await convertImageToBase64(imageFile);
-                    messagesContent = [
-                        {
-                            role: "user",
-                            content: [
-                                {
-                                    type: "text",
-                                    text: `Analyze this UI screenshot carefully. Fix any missing parts (like arithmetic buttons +, -, *, / in calculators or missing grid elements) and write a complete, fully functional standalone single-file HTML/JS app using Tailwind CSS via CDN matching or improving this design. Output ONLY valid HTML starting with <!DOCTYPE html> and ending with </html> without markdown blocks. User instruction: ${promptText || "Fix and replicate this UI accurately."}`
-                                },
-                                {
-                                    type: "image_url",
-                                    image_url: { url: base64Image }
-                                }
-                            ]
-                        }
-                    ];
-                } else {
-                    messagesContent = [
-                        {
-                            role: "system",
-                            content: "You are an expert mobile app UI designer. Create a fully self-contained, responsive HTML/JS app using Tailwind CSS via CDN. For any calculator or grid, use a 4-column layout with all arithmetic buttons (+, -, *, /, C, =). Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown blocks."
-                        },
-                        {
-                            role: "user",
-                            content: promptText
-                        }
-                    ];
+                // DIRECT 70B API CALL
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
+                    body: JSON.stringify({
+                        model: SELECTED_MODEL,
+                        messages: messagesContent,
+                        temperature: 0.7,
+                        max_tokens: 8192
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error || !data.choices) {
+                    throw new Error(data.error ? data.error.message : "70B Model failed to respond!");
                 }
-
-                // यहाँ ऑटो-फ़ेलओवर फ़ंक्शन कॉल हो रहा है जो सही मॉडल खुद ढूँढ लेगा
-                const data = await callVisionModelWithFallback(messagesContent);
 
                 let rawHtml = data.choices[0].message.content;
                 appFiles.indexHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
@@ -308,9 +250,9 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
                         body: JSON.stringify({
-                            model: "llama-3.3-70b-versatile",
+                            model: SELECTED_MODEL,
                             messages: [
-                                { role: "system", content: "You are an expert Android developer. Output clean production-ready code for the requested file path based on user prompt. Do not include markdown ticks." },
+                                { role: "system", content: "You are an expert Android developer. Output clean production-ready code for the requested file path. Do not include markdown ticks." },
                                 { role: "user", content: `Create code for file path ${customPath} based on requirement: ${promptText}` }
                             ],
                             temperature: 0.7
@@ -344,7 +286,7 @@
         async function pushFilesToGitHub(customPath, customContent) {
             const repo = `${ghUser}/${ghRepoName}`;
             
-            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update index.html via Smart Vision AI");
+            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update index.html via 70B Engine");
             await uploadFile(repo, "app/src/main/AndroidManifest.xml", appFiles.androidManifest, "Update AndroidManifest.xml");
             await uploadFile(repo, "app/src/main/java/com/viziahub/app/MainActivity.java", appFiles.mainActivity, "Update MainActivity.java");
             await uploadFile(repo, "app/build.gradle", appFiles.buildGradleApp, "Update app-level build.gradle");
