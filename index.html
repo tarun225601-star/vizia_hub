@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro - Groq & GitHub Android Engine</title>
+    <title>Viziahub Pro - Enterprise Android Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JSZip CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -13,11 +13,10 @@
     <div class="max-w-xl mx-auto w-full space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h1 class="text-2xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">PRO ENGINE</span></h1>
-            <div class="flex gap-2">
-                <button onclick="openSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">⚙️ Groq API</button>
-                <button onclick="openGitHubSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-purple-400">🐙 GitHub Config</button>
-            </div>
+            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">ENTERPRISE</span></h1>
+            <button onclick="toggleSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-cyan-400 font-bold flex items-center gap-1">
+                ⚙️ Settings
+            </button>
         </div>
 
         <!-- Prompt Box -->
@@ -37,7 +36,7 @@
 
         <!-- Status & Progress Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center space-y-3">
-            <p id="statusText" class="text-xs text-gray-400 font-mono">Ready via Groq & GitHub Cloud</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Ready via Groq & GitHub</p>
             
             <!-- Progress Bar -->
             <div class="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-gray-800">
@@ -52,15 +51,48 @@
         </div>
     </div>
 
+    <!-- Enterprise Settings Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 border border-gray-700 p-6 rounded-3xl w-full max-w-sm space-y-4 shadow-2xl">
+            <h2 class="text-lg font-bold text-white border-b border-gray-800 pb-2">Enterprise Studio Settings</h2>
+            
+            <div class="space-y-3 text-left">
+                <div>
+                    <label class="text-[10px] uppercase text-gray-400 font-bold">Groq API Key</label>
+                    <input type="password" id="m_groq" placeholder="gsk_..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-gray-400 font-bold">GitHub Personal Access Token</label>
+                    <input type="password" id="m_ghToken" placeholder="ghp_..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-gray-400 font-bold">GitHub Username</label>
+                    <input type="text" id="m_ghUser" placeholder="e.g. tarun225601-star" class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-gray-400 font-bold">GitHub Repository Name</label>
+                    <input type="text" id="m_ghRepo" placeholder="e.g. himanshu_app" class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
+                </div>
+            </div>
+            
+            <div class="flex gap-2 pt-2">
+                <button onclick="toggleSettings()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-2.5 rounded-xl text-sm font-semibold text-gray-300">Cancel</button>
+                <button onclick="saveSettings()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-cyan-600/20">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer Note -->
     <footer class="text-center text-gray-600 text-[10px] mt-6">
-        Viziahub Native Wrapper Engine • Zero-Cost Cloud Pipeline
+        Viziahub Native Wrapper Engine • Autonomous Enterprise Studio
     </footer>
 
     <script>
+        // LocalStorage Data Load
         let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
         let ghToken = localStorage.getItem('viz_gh_token') || '';
-        let ghRepo = localStorage.getItem('viz_gh_repo') || ''; // format: username/repository
+        let ghUser = localStorage.getItem('viz_gh_user') || '';
+        let ghRepoName = localStorage.getItem('viz_gh_repo') || '';
 
         let appFiles = {
             indexHtml: localStorage.getItem('viz_index') || '',
@@ -77,27 +109,32 @@
             enableDownloadButton();
         }
 
-        function openSettings() {
-            const key = prompt("Enter your Groq API Key:", groqApiKey);
-            if(key !== null) {
-                groqApiKey = key.trim();
-                localStorage.setItem('viziahub_groq_key', groqApiKey);
-                alert("Groq API Key Saved Successfully!");
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('hidden');
+            
+            if(!modal.classList.contains('hidden')) {
+                document.getElementById('m_groq').value = localStorage.getItem('viziahub_groq_key') || '';
+                document.getElementById('m_ghToken').value = localStorage.getItem('viz_gh_token') || '';
+                document.getElementById('m_ghUser').value = localStorage.getItem('viz_gh_user') || '';
+                document.getElementById('m_ghRepo').value = localStorage.getItem('viz_gh_repo') || '';
             }
         }
 
-        function openGitHubSettings() {
-            const token = prompt("Enter GitHub Personal Access Token:", ghToken);
-            if(token !== null) {
-                ghToken = token.trim();
-                localStorage.setItem('viz_gh_token', ghToken);
-            }
-            const repo = prompt("Enter GitHub Repository (e.g. username/repo-name):", ghRepo);
-            if(repo !== null) {
-                ghRepo = repo.trim();
-                localStorage.setItem('viz_gh_repo', ghRepo);
-            }
-            alert("GitHub Configuration Saved Successfully!");
+        function saveSettings() {
+            localStorage.setItem('viziahub_groq_key', document.getElementById('m_groq').value.trim());
+            localStorage.setItem('viz_gh_token', document.getElementById('m_ghToken').value.trim());
+            localStorage.setItem('viz_gh_user', document.getElementById('m_ghUser').value.trim());
+            localStorage.setItem('viz_gh_repo', document.getElementById('m_ghRepo').value.trim());
+            
+            // Refresh variables
+            groqApiKey = localStorage.getItem('viziahub_groq_key');
+            ghToken = localStorage.getItem('viz_gh_token');
+            ghUser = localStorage.getItem('viz_gh_user');
+            ghRepoName = localStorage.getItem('viz_gh_repo');
+
+            alert("Enterprise Settings Saved Successfully!");
+            toggleSettings();
         }
 
         function enableDownloadButton() {
@@ -113,8 +150,8 @@
                 return;
             }
             if(!groqApiKey) {
-                alert("Pehle ⚙️ Groq API Settings mein jaakar apni Key daal!");
-                openSettings();
+                alert("Pehle ⚙️ Settings mein jaakar apni Groq API Key daal!");
+                toggleSettings();
                 return;
             }
 
@@ -125,7 +162,6 @@
             buildBtn.disabled = true;
             let width = 0;
 
-            // प्रोग्रेस बार और डायनामिक मैसेज लूप शुरू (5 मिनट / 100% के हिसाब से)
             const messages = [
                 "Initializing Groq AI Engine...",
                 "Generating App UI & Code via Llama3...",
@@ -142,10 +178,9 @@
                     let msgIndex = Math.floor(width / 17);
                     status.innerText = `🚀 ${messages[msgIndex] || "Processing..."} (${width}%)`;
                 }
-            }, 2500); // लगभग 4 मिनट में 95% तक पहुँचेगा
+            }, 2500);
 
             try {
-                // 1. Groq से कोड जनरेट करवाना
                 const systemInstruction = "You are an expert mobile web application developer. Create a fully self-contained, responsive, high-performance HTML/JS application (using Tailwind CSS via CDN) based on the user request. Make it look like a real native mobile app. Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown code blocks.";
 
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -170,7 +205,6 @@
                 let rawHtml = data.choices[0].message.content;
                 rawHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
 
-                // 2. फाइल्स तैयार करना
                 appFiles.indexHtml = rawHtml;
                 appFiles.manifestJson = JSON.stringify({
                     "name": "Viziahub Native App",
@@ -190,7 +224,6 @@
 
                 appFiles.buildGradle = `plugins { id 'com.android.application' }\nandroid { compileSdk 34\ndefaultConfig { applicationId "com.viziahub.app"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\nbuildTypes { release { minifyEnabled false } }\n}\ndependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.9.0' }`;
 
-                // LocalStorage में सेव
                 localStorage.setItem('viz_index', appFiles.indexHtml);
                 localStorage.setItem('viz_manifest', appFiles.manifestJson);
                 localStorage.setItem('viz_sw', appFiles.swJs);
@@ -198,14 +231,14 @@
                 localStorage.setItem('viz_main_activity', appFiles.mainActivity);
                 localStorage.setItem('viz_gradle', appFiles.buildGradle);
 
-                // 3. यदि GitHub Token और Repo सेट है, तो ऑटोमैटिक पुश करो
-                if(ghToken && ghRepo) {
+                // Auto Push to GitHub if configured
+                if(ghToken && ghUser && ghRepoName) {
                     await pushToGitHub(appFiles.indexHtml);
                 }
 
                 clearInterval(progressInterval);
                 progressBar.style.width = "100%";
-                status.innerText = "✅ Complete Android Package Built & GitHub Pipeline Triggered!";
+                status.innerText = "✅ Complete Android Package Built & Pipeline Triggered!";
                 document.getElementById('previewContainer').classList.remove('hidden');
                 enableDownloadButton();
 
@@ -218,12 +251,11 @@
             }
         }
 
-        // GitHub API के ज़रिए कोड पुश करने का फंक्शन
         async function pushToGitHub(htmlContent) {
+            const fullRepo = `${ghUser}/${ghRepoName}`;
             const path = "app/src/main/assets/index.html";
-            const url = `https://api.github.com/repos/${ghRepo}/contents/${path}`;
+            const url = `https://api.github.com/repos/${fullRepo}/contents/${path}`;
             
-            // पहले फाइल की sha निकालनी पड़ती है अपडेट करने के लिए
             let sha = "";
             try {
                 const getRes = await fetch(url, {
@@ -233,11 +265,10 @@
                     const fileData = await getRes.json();
                     sha = fileData.sha;
                 }
-            } catch(e) { console.log("New file creation"); }
+            } catch(e) { console.log("Creating new file"); }
 
-            // GitHub पर फाइल कमिट करना
             const bodyData = {
-                message: "Auto-update App via ViziaHub Engine",
+                message: "Auto-update App via ViziaHub Enterprise Studio",
                 content: btoa(unescape(encodeURIComponent(htmlContent))),
                 branch: "main"
             };
@@ -276,7 +307,7 @@
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Viziahub_Cloud_Project.zip';
+            a.download = 'Viziahub_Enterprise_Project.zip';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
