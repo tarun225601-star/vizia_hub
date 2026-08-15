@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Viziahub Pro - Enterprise Android Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JSZip CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body class="bg-gray-950 text-white min-h-screen p-4 flex flex-col justify-between">
 
@@ -26,17 +24,19 @@
             
             <div class="flex flex-col gap-2">
                 <button onclick="generateAndDeployPackage()" id="buildBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition duration-200 text-sm shadow-lg shadow-cyan-500/20">
-                    🚀 Build Full Android Package & APK
+                    🚀 Build Full Android Package & Trigger APK Pipeline
                 </button>
-                <button onclick="downloadAndroidZip()" id="downloadBtn" disabled class="w-full bg-gray-800 text-gray-500 font-bold py-3 rounded-xl transition duration-200 text-sm border border-gray-700 cursor-not-allowed">
-                    📦 Download Android ZIP (Studio Project)
-                </button>
+                
+                <!-- Real GitHub Actions APK Download Button -->
+                <a href="#" id="downloadApkBtn" target="_blank" class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition duration-200 text-sm border border-emerald-500 text-center shadow-lg shadow-emerald-600/20">
+                    📥 Download Real APK (From GitHub Actions)
+                </a>
             </div>
         </div>
 
         <!-- Status & Progress Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center space-y-3">
-            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Ready via Groq & GitHub</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Ready via Groq & GitHub Actions</p>
             
             <!-- Progress Bar -->
             <div class="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-gray-800">
@@ -96,17 +96,15 @@
 
         let appFiles = {
             indexHtml: localStorage.getItem('viz_index') || '',
-            manifestJson: localStorage.getItem('viz_manifest') || '',
-            swJs: localStorage.getItem('viz_sw') || '',
             androidManifest: localStorage.getItem('viz_android_manifest') || '',
             mainActivity: localStorage.getItem('viz_main_activity') || '',
             buildGradle: localStorage.getItem('viz_gradle') || ''
         };
 
         if(appFiles.indexHtml) {
-            document.getElementById('statusText').innerText = "Last built Android package loaded from memory!";
+            document.getElementById('statusText').innerText = "Last built package loaded from memory!";
             document.getElementById('previewContainer').classList.remove('hidden');
-            enableDownloadButton();
+            showRealDownloadButton();
         }
 
         function toggleSettings() {
@@ -127,7 +125,6 @@
             localStorage.setItem('viz_gh_user', document.getElementById('m_ghUser').value.trim());
             localStorage.setItem('viz_gh_repo', document.getElementById('m_ghRepo').value.trim());
             
-            // Refresh variables
             groqApiKey = localStorage.getItem('viziahub_groq_key');
             ghToken = localStorage.getItem('viz_gh_token');
             ghUser = localStorage.getItem('viz_gh_user');
@@ -137,10 +134,13 @@
             toggleSettings();
         }
 
-        function enableDownloadButton() {
-            const dlBtn = document.getElementById('downloadBtn');
-            dlBtn.disabled = false;
-            dlBtn.className = "w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl transition duration-200 text-sm border border-cyan-500 cursor-pointer shadow-lg shadow-cyan-600/20";
+        function showRealDownloadButton() {
+            const dlBtn = document.getElementById('downloadApkBtn');
+            if(ghUser && ghRepoName) {
+                // सीधा GitHub Actions पेज का लिंक सेट कर देता है जहाँ से APK डाउनलोड होगी
+                dlBtn.href = `https://github.com/${ghUser}/${ghRepoName}/actions`;
+                dlBtn.classList.remove('hidden');
+            }
         }
 
         async function generateAndDeployPackage() {
@@ -154,6 +154,11 @@
                 toggleSettings();
                 return;
             }
+            if(!ghToken || !ghUser || !ghRepoName) {
+                alert("GitHub credentials (Token, User, Repo) settings mein daalna zuri hai APK pipeline ke liye!");
+                toggleSettings();
+                return;
+            }
 
             const status = document.getElementById('statusText');
             const buildBtn = document.getElementById('buildBtn');
@@ -163,22 +168,21 @@
             let width = 0;
 
             const messages = [
-                "Initializing Groq AI Engine...",
-                "Generating App UI & Code via Llama3...",
-                "Structuring Android Manifest & Assets...",
-                "Pushing Code to Cloud Pipeline...",
-                "Triggering GitHub Actions Build...",
-                "Compiling Gradle & Generating APK..."
+                "Initializing Groq Llama3 Engine...",
+                "Generating App UI & Native Code...",
+                "Structuring Gradle & Android Files...",
+                "Pushing Full Project to GitHub...",
+                "Triggering GitHub Actions APK Pipeline..."
             ];
 
             const progressInterval = setInterval(() => {
-                if (width < 95) {
+                if (width < 90) {
                     width++;
                     progressBar.style.width = width + "%";
-                    let msgIndex = Math.floor(width / 17);
+                    let msgIndex = Math.floor(width / 20);
                     status.innerText = `🚀 ${messages[msgIndex] || "Processing..."} (${width}%)`;
                 }
-            }, 2500);
+            }, 1000);
 
             try {
                 const systemInstruction = "You are an expert mobile web application developer. Create a fully self-contained, responsive, high-performance HTML/JS application (using Tailwind CSS via CDN) based on the user request. Make it look like a real native mobile app. Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown code blocks.";
@@ -206,41 +210,27 @@
                 rawHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
 
                 appFiles.indexHtml = rawHtml;
-                appFiles.manifestJson = JSON.stringify({
-                    "name": "Viziahub Native App",
-                    "short_name": "VizApp",
-                    "start_url": "index.html",
-                    "display": "standalone",
-                    "background_color": "#030712",
-                    "theme_color": "#06b6d4",
-                    "icons": [{"src": "icon.png", "sizes": "192x192", "type": "image/png"}]
-                }, null, 2);
-
-                appFiles.swJs = `self.addEventListener('install', e => e.waitUntil(caches.open('viz-v1').then(c => c.addAll(['index.html', 'manifest.json']))));\nself.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`.trim();
-
                 appFiles.androidManifest = `<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n    package="com.viziahub.app">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="Viziahub App" android:theme="@style/Theme.AppCompat.NoActionBar">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>`;
-
-                appFiles.mainActivity = `package com.viziahub.app;\nimport android.os.Bundle;\nimport android.webkit.WebSettings;\nimport android.webkit.WebView;\nimport android.webkit.WebViewClient;\nimport androidx.appcompat.app.AppCompatActivity;\npublic class MainActivity extends AppCompatActivity {\n    private WebView webView;\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        webView = new WebView(this);\n        webView.getSettings().setJavaScriptEnabled(true);\n        webView.getSettings().setDomStorageEnabled(true);\n        webView.setWebViewClient(new WebViewClient());\n        webView.loadUrl("file:///android_asset/index.html");\n        setContentView(webView);\n    }\n}`;
+                
+                appFiles.mainActivity = `package com.viziahub.app;\nimport android.os.Bundle;\nimport android.webkit.WebView;\nimport android.webkit.WebViewClient;\nimport androidx.appcompat.app.AppCompatActivity;\npublic class MainActivity extends AppCompatActivity {\n    private WebView webView;\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        webView = new WebView(this);\n        webView.getSettings().setJavaScriptEnabled(true);\n        webView.getSettings().setDomStorageEnabled(true);\n        webView.setWebViewClient(new WebViewClient());\n        webView.loadUrl("file:///android_asset/index.html");\n        setContentView(webView);\n    }\n}`;
 
                 appFiles.buildGradle = `plugins { id 'com.android.application' }\nandroid { compileSdk 34\ndefaultConfig { applicationId "com.viziahub.app"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\nbuildTypes { release { minifyEnabled false } }\n}\ndependencies { implementation 'androidx.appcompat:appcompat:1.6.1'; implementation 'com.google.android.material:material:1.9.0' }`;
 
+                // Save locally
                 localStorage.setItem('viz_index', appFiles.indexHtml);
-                localStorage.setItem('viz_manifest', appFiles.manifestJson);
-                localStorage.setItem('viz_sw', appFiles.swJs);
                 localStorage.setItem('viz_android_manifest', appFiles.androidManifest);
                 localStorage.setItem('viz_main_activity', appFiles.mainActivity);
                 localStorage.setItem('viz_gradle', appFiles.buildGradle);
 
-                // Auto Push to GitHub if configured
-                if(ghToken && ghUser && ghRepoName) {
-                    await pushToGitHub(appFiles.indexHtml);
-                }
+                // Push Full Project Structure to GitHub so Actions never fails
+                status.innerText = "☁️ Pushing complete project files to GitHub...";
+                await pushFullProjectToGitHub();
 
                 clearInterval(progressInterval);
                 progressBar.style.width = "100%";
-                status.innerText = "✅ Complete Android Package Built & Pipeline Triggered!";
+                status.innerText = "✅ Pipeline Triggered! GitHub is building your APK now.";
                 document.getElementById('previewContainer').classList.remove('hidden');
-                enableDownloadButton();
+                showRealDownloadButton();
 
             } catch (error) {
                 clearInterval(progressInterval);
@@ -251,11 +241,25 @@
             }
         }
 
-        async function pushToGitHub(htmlContent) {
+        async function pushFullProjectToGitHub() {
             const fullRepo = `${ghUser}/${ghRepoName}`;
-            const path = "app/src/main/assets/index.html";
-            const url = `https://api.github.com/repos/${fullRepo}/contents/${path}`;
             
+            // 1. Push index.html
+            await uploadFileToRepo(fullRepo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update App UI index.html");
+            // 2. Push Root build.gradle
+            await uploadFileToRepo(fullRepo, "build.gradle", `plugins { id 'com.android.application' version '8.1.0' apply false }`, "Update root build.gradle");
+            // 3. Push settings.gradle
+            await uploadFileToRepo(fullRepo, "settings.gradle", `rootProject.name = "${ghRepoName}";\ninclude ':app'`, "Update settings.gradle");
+            // 4. Push app/build.gradle
+            await uploadFileToRepo(fullRepo, "app/build.gradle", appFiles.buildGradle, "Update app build.gradle");
+            // 5. Push AndroidManifest.xml
+            await uploadFileToRepo(fullRepo, "app/src/main/AndroidManifest.xml", appFiles.androidManifest, "Update AndroidManifest.xml");
+            // 6. Push MainActivity.java
+            await uploadFileToRepo(fullRepo, "app/src/main/java/com/viziahub/app/MainActivity.java", appFiles.mainActivity, "Update MainActivity.java");
+        }
+
+        async function uploadFileToRepo(repo, path, content, message) {
+            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
             let sha = "";
             try {
                 const getRes = await fetch(url, {
@@ -265,11 +269,11 @@
                     const fileData = await getRes.json();
                     sha = fileData.sha;
                 }
-            } catch(e) { console.log("Creating new file"); }
+            } catch(e) {}
 
             const bodyData = {
-                message: "Auto-update App via ViziaHub Enterprise Studio",
-                content: btoa(unescape(encodeURIComponent(htmlContent))),
+                message: message,
+                content: btoa(unescape(encodeURIComponent(content))),
                 branch: "main"
             };
             if(sha) bodyData.sha = sha;
@@ -289,29 +293,6 @@
             const win = window.open();
             win.document.write(appFiles.indexHtml);
             win.document.close();
-        }
-
-        async function downloadAndroidZip() {
-            if(!appFiles.indexHtml) return alert("Pehle app build toh kar!");
-            
-            const zip = new JSZip();
-            zip.folder("app/src/main/assets").file("index.html", appFiles.indexHtml);
-            zip.folder("app/src/main/assets").file("manifest.json", appFiles.manifestJson);
-            zip.folder("app/src/main/assets").file("sw.js", appFiles.swJs);
-            zip.folder("app/src/main/java/com/viziahub/app").file("MainActivity.java", appFiles.mainActivity);
-            zip.folder("app/src/main").file("AndroidManifest.xml", appFiles.androidManifest);
-            zip.folder("app").file("build.gradle", appFiles.buildGradle);
-            zip.file("README.txt", "Viziahub Android Wrapper Package.\n1. Open in Android Studio.\n2. Build APK.");
-
-            const content = await zip.generateAsync({ type: "blob" });
-            const url = URL.createObjectURL(content);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Viziahub_Enterprise_Project.zip';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         }
     </script>
 </body>
