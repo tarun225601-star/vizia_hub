@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro - Ultimate Android Wrapper Engine</title>
+    <title>Viziahub Pro - Groq Android Wrapper Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JSZip CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -13,14 +13,14 @@
     <div class="max-w-xl mx-auto w-full space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h1 class="text-2xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">ANDROID WRAPPER</span></h1>
-            <button onclick="openSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">⚙️ Grok API Settings</button>
+            <h1 class="text-2xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">GROQ WRAPPER</span></h1>
+            <button onclick="openSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">⚙️ Groq API Settings</button>
         </div>
 
         <!-- Prompt Box -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-2xl space-y-4">
             <label class="block text-xs uppercase tracking-widest text-gray-400 font-bold">App Idea Prompt</label>
-            <textarea id="promptInput" rows="4" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Build a fully interactive mobile web app that replicates a TikTok feed..."></textarea>
+            <textarea id="promptInput" rows="4" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Make simple calculator app..."></textarea>
             
             <div class="flex gap-2">
                 <button onclick="generateAndroidPackage()" id="buildBtn" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition duration-200 text-sm shadow-lg shadow-cyan-500/20">
@@ -34,7 +34,7 @@
 
         <!-- Status & Preview Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center">
-            <p id="statusText" class="text-xs text-gray-400 font-mono mb-3">Ready to build native Android wrapper</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono mb-3">Ready via Groq API</p>
             <div id="previewContainer" class="hidden">
                 <button onclick="launchPreview()" class="w-full bg-gray-950 border border-cyan-500/40 hover:bg-cyan-950/30 text-cyan-400 font-semibold py-2.5 rounded-xl text-xs transition">
                     👁️ Test Live App Preview
@@ -45,11 +45,11 @@
 
     <!-- Footer Note -->
     <footer class="text-center text-gray-600 text-[10px] mt-6">
-        Viziahub Native Wrapper Engine • Grok API + Android SDK Bridge
+        Viziahub Native Wrapper Engine • Groq Cloud Integrated
     </footer>
 
     <script>
-        let grokApiKey = localStorage.getItem('viziahub_grok_key') || '';
+        let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
         let appFiles = {
             indexHtml: localStorage.getItem('viz_index') || '',
             manifestJson: localStorage.getItem('viz_manifest') || '',
@@ -66,11 +66,11 @@
         }
 
         function openSettings() {
-            const key = prompt("Enter your Grok (xAI) API Key:", grokApiKey);
+            const key = prompt("Enter your Groq API Key:", groqApiKey);
             if(key !== null) {
-                grokApiKey = key.trim();
-                localStorage.setItem('viziahub_grok_key', grokApiKey);
-                alert("Grok API Key Saved Successfully!");
+                groqApiKey = key.trim();
+                localStorage.setItem('viziahub_groq_key', groqApiKey);
+                alert("Groq API Key Saved Successfully!");
             }
         }
 
@@ -86,37 +86,38 @@
                 alert("Pehle prompt toh daal bhai!");
                 return;
             }
-            if(!grokApiKey) {
-                alert("Pehle ⚙️ API Settings mein jaakar apni Grok API Key daal!");
+            if(!groqApiKey) {
+                alert("Pehle ⚙️ API Settings mein jaakar apni Groq API Key daal!");
                 openSettings();
                 return;
             }
 
             const status = document.getElementById('statusText');
-            status.innerText = "Building app UI & Android Wrapper via Grok AI...";
+            status.innerText = "Building via Groq Cloud Engine...";
             document.getElementById('buildBtn').disabled = true;
 
             const systemInstruction = "You are an expert mobile web application developer. Create a fully self-contained, responsive, high-performance HTML/JS application (using Tailwind CSS via CDN) based on the user request. Make it look like a real native mobile app. Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown code blocks.";
 
             try {
-                const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                // Correct Groq API Endpoint & Llama3 Model configuration
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${grokApiKey}`
+                        'Authorization': `Bearer ${groqApiKey}`
                     },
                     body: JSON.stringify({
-                        model: "grok-beta",
+                        model: "llama-3.3-70b-versatile",
                         messages: [
                             { role: "system", content: systemInstruction },
                             { role: "user", content: promptText }
                         ],
-                        stream: false
+                        temperature: 0.7
                     })
                 });
 
                 const data = await response.json();
-                if(data.error) throw new Error(data.error.message || "Grok API Error");
+                if(data.error) throw new Error(data.error.message || "Groq API Error");
 
                 let rawHtml = data.choices[0].message.content;
                 rawHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
@@ -138,7 +139,7 @@ self.addEventListener('install', e => e.waitUntil(caches.open('viz-v1').then(c =
 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
                 `.trim();
 
-                // 2. Android Wrapper Files (Native Android Studio Structure)
+                // 2. Android Wrapper Files
                 appFiles.androidManifest = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.viziahub.app">
@@ -230,7 +231,7 @@ dependencies {
                 localStorage.setItem('viz_main_activity', appFiles.mainActivity);
                 localStorage.setItem('viz_gradle', appFiles.buildGradle);
 
-                status.innerText = "Success! Complete Android Studio Project Wrapper Generated.";
+                status.innerText = "Success! Complete Android Studio Project Wrapper Generated via Groq.";
                 document.getElementById('previewContainer').classList.remove('hidden');
                 enableDownloadButton();
 
@@ -253,14 +254,11 @@ dependencies {
             if(!appFiles.indexHtml) return alert("Pehle app build toh kar!");
             
             const zip = new JSZip();
-            
-            // Web App Assets folder (Jo Android WebView ke assets mein jayega)
             const assetsFolder = zip.folder("app/src/main/assets");
             assetsFolder.file("index.html", appFiles.indexHtml);
             assetsFolder.file("manifest.json", appFiles.manifestJson);
             assetsFolder.file("sw.js", appFiles.swJs);
 
-            // Android Native Code Folders
             const javaFolder = zip.folder("app/src/main/java/com/viziahub/app");
             javaFolder.file("MainActivity.java", appFiles.mainActivity);
 
@@ -270,14 +268,13 @@ dependencies {
             const gradleFolder = zip.folder("app");
             gradleFolder.file("build.gradle", appFiles.buildGradle);
 
-            // Root Readme for User
-            zip.file("README.txt", "Viziahub Android Wrapper Package.\n1. Open this folder in Android Studio.\n2. Let Gradle sync.\n3. Click 'Build Bundle(s) / APK(s)' to get your 20MB Native APK!");
+            zip.file("README.txt", "Viziahub Android Wrapper Package (Powered by Groq).\n1. Open this folder in Android Studio.\n2. Let Gradle sync.\n3. Click 'Build Bundle(s) / APK(s)' to get your 20MB Native APK!");
 
             const content = await zip.generateAsync({ type: "blob" });
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Viziahub_Native_Android_Project.zip';
+            a.download = 'Viziahub_Groq_Android_Project.zip';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
