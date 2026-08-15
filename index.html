@@ -38,8 +38,8 @@
         </div>
     </div>
 
-    <!-- Hidden Master Storage -->
-    <textarea id="masterCode" class="hidden"></textarea>
+    <!-- Hidden Master Storage (Safe Escape) -->
+    <textarea id="masterCode" style="display:none;"></textarea>
 
     <script>
         window.onload = function() {
@@ -55,7 +55,7 @@
 
         function saveKey() {
             const key = document.getElementById('groqKey').value;
-            localStorage.setItem('groq_key', key);
+            localStorage.setItem('groq_key', key.trim());
             alert("Groq API Key Saved Successfully!");
             toggleSettings();
         }
@@ -79,7 +79,7 @@
 
             genBtn.innerText = "Building Pro App...";
             genBtn.disabled = true;
-            status.innerText = "Status: Groq is crafting your high-level app...";
+            status.innerText = "Status: Connecting to Groq AI...";
 
             const systemPrompt = "You are an elite senior full-stack and UI/UX app developer. Create a fully functional, gorgeous, professional single-file mobile web app based on the user's request. 1. You MUST include the Tailwind CSS CDN script (<script src=\"https://cdn.tailwindcss.com\"></script>) inside the <head>. 2. Design a gorgeous, modern mobile-first interface with proper styling and layout. 3. Embed clean working JavaScript for full interactivity. 4. Output ONLY raw, clean HTML code without any markdown ticks like ```html or conversational text.";
 
@@ -96,19 +96,26 @@
                             { role: "system", content: systemPrompt },
                             { role: "user", content: promptText }
                         ],
-                        temperature: 0.7,
-                        max_tokens: 8000
+                        temperature: 0.5,
+                        max_tokens: 4000
                     })
                 });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || `HTTP Error: ${response.status}`);
+                }
 
                 const data = await response.json();
                 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    throw new Error(data.error?.message || "API response invalid.");
+                    throw new Error("Invalid API response structure received.");
                 }
 
                 let packedCode = data.choices[0].message.content;
-                packedCode = packedCode.replace(/```html/g, "").replace(/```/g, "").trim();
+                
+                // Clean markdown ticks safely
+                packedCode = packedCode.replace(/```html/gi, "").replace(/```/g, "").trim();
 
                 document.getElementById('masterCode').value = packedCode;
 
@@ -118,7 +125,8 @@
                 
                 status.innerText = "Status: Pro App successfully built and ready!";
             } catch (error) {
-                status.innerText = "Status Error: " + error.message;
+                console.error(error);
+                status.innerText = "Error Log: " + error.message;
             } finally {
                 genBtn.innerText = "🚀 Build & Pack Pro App";
                 genBtn.disabled = false;
