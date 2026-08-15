@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viziahub - AI App Factory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sidebar / Settings Panel -->
+    <div class="sidebar">
+        <h2>⚙️ Engine Settings</h2>
+        
+        <label>Grok API Key</label>
+        <input type="password" id="grokKey" placeholder="xai-...">
+        
+        <label>Supabase URL</label>
+        <input type="text" id="supabaseUrl" placeholder="https://xyz.supabase.co">
+        
+        <label>Supabase Anon Key</label>
+        <input type="password" id="supabaseKey" placeholder="eyJhbGci...">
+        
+        <button class="save-btn" onclick="saveSettings()">Save Configurations</button>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="main-container">
+        <h1>Viziahub AI Engine</h1>
+        
+        <div class="ai-box">
+            <label>Ask Grok AI to Build Your App</label>
+            <input type="text" id="aiPrompt" placeholder="e.g. Create a todo app with local storage">
+            <button class="ai-btn" onclick="generateCodeWithGrok()">Generate Code via Grok</button>
+        </div>
+
+        <label>Master Code (Single File HTML/JS/CSS)</label>
+        <textarea id="masterCode" placeholder="Code will appear here..."></textarea>
+        
+        <button class="build-btn" onclick="downloadSingleFileApp()">Download Single-File App</button>
+        <div id="result"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
