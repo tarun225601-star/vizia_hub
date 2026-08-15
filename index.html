@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro - Full Android Path & Dependency Engine</title>
+    <title>Viziahub Pro - Vision-to-Code Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-950 text-white min-h-screen p-4 flex flex-col justify-between">
@@ -11,28 +11,34 @@
     <div class="max-w-xl mx-auto w-full space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">FULL ANDROID PATH ENGINE</span></h1>
+            <h1 class="text-xl font-black text-cyan-400 tracking-wider">VIZIAHUB <span class="text-white text-xs bg-cyan-900 px-2 py-1 rounded">VISION AI ENGINE</span></h1>
             <button onclick="toggleSettings()" class="bg-gray-900 border border-gray-800 text-xs px-3 py-2 rounded-lg hover:bg-gray-800 text-cyan-400 font-bold flex items-center gap-1">
                 ⚙️ Settings
             </button>
         </div>
 
-        <!-- Prompt Box & Optional Custom Path -->
+        <!-- Prompt Box & Image Upload for Vision -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-2xl space-y-4">
             <div>
-                <label class="block text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">App Idea / Prompt</label>
-                <textarea id="promptInput" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Make a modern flash-light or note-taking app..."></textarea>
+                <label class="block text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">App Idea / Instructions</label>
+                <textarea id="promptInput" rows="2" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-cyan-200 focus:outline-none focus:border-cyan-500 placeholder-gray-600" placeholder="e.g. Fix this calculator, add all missing +/-/*// buttons based on screenshot..."></textarea>
+            </div>
+
+            <!-- Image Upload for Vision Analysis -->
+            <div>
+                <label class="block text-xs uppercase tracking-widest text-emerald-400 font-bold mb-1">📸 Upload UI Screenshot (Optional for Vision-to-Code):</label>
+                <input type="file" id="imageInput" accept="image/*" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-xs text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-500 cursor-pointer">
             </div>
 
             <!-- Custom File Path Input -->
             <div>
                 <label class="block text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">Custom Android File Path (Optional):</label>
-                <input type="text" id="customPathInput" placeholder="e.g. app/src/main/java/com/viziahub/app/DatabaseHelper.java" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-emerald-300 font-mono outline-none focus:border-emerald-500 placeholder-gray-700">
+                <input type="text" id="customPathInput" placeholder="e.g. app/src/main/java/com/viziahub/app/CalculatorActivity.java" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-emerald-300 font-mono outline-none focus:border-emerald-500 placeholder-gray-700">
             </div>
             
             <div class="flex flex-col gap-2">
                 <button onclick="generateAndDeployPackage()" id="buildBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition duration-200 text-sm shadow-lg shadow-cyan-500/20">
-                    🚀 Build Full Android Paths + Dependencies & Trigger Pipeline
+                    🚀 Build via Vision AI & Trigger Pipeline
                 </button>
                 
                 <!-- Real GitHub Actions APK Download Button -->
@@ -44,7 +50,7 @@
 
         <!-- Status & Progress Area -->
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center space-y-3">
-            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Android Path Pipeline Ready</p>
+            <p id="statusText" class="text-xs text-gray-400 font-mono">Idle - Vision Engine Ready</p>
             
             <!-- Progress Bar -->
             <div class="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-gray-800">
@@ -92,7 +98,7 @@
 
     <!-- Footer Note -->
     <footer class="text-center text-gray-600 text-[10px] mt-6">
-        Viziahub Native Wrapper Engine • Full Android Path & Dependency Integration
+        Viziahub Native Wrapper Engine • Vision-to-Code UI Replicator
     </footer>
 
     <script>
@@ -112,7 +118,7 @@
         };
 
         if(appFiles.indexHtml) {
-            document.getElementById('statusText').innerText = "Loaded cached android package from memory!";
+            document.getElementById('statusText').innerText = "Loaded cached package from memory!";
             document.getElementById('previewContainer').classList.remove('hidden');
             showRealDownloadButton();
         }
@@ -147,16 +153,28 @@
             const dlBtn = document.getElementById('downloadApkBtn');
             if(ghUser && ghRepoName) {
                 dlBtn.href = `https://github.com/${ghUser}/${ghRepoName}/actions`;
+                dlBtn.classList.print = '';
                 dlBtn.classList.remove('hidden');
             }
         }
 
+        // Convert uploaded image file to Base64
+        function convertImageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function generateAndDeployPackage() {
             const promptText = document.getElementById('promptInput').value.trim();
+            const imageFile = document.getElementById('imageInput').files[0];
             const customPath = document.getElementById('customPathInput').value.trim();
 
-            if(!promptText) {
-                alert("Pehle prompt daal bhai!");
+            if(!promptText && !imageFile) {
+                alert("Pehle prompt ya screenshot image daal bhai!");
                 return;
             }
             if(!groqApiKey || !ghToken || !ghUser || !ghRepoName) {
@@ -176,35 +194,67 @@
                 if (width < 90) {
                     width++;
                     progressBar.style.width = width + "%";
-                    status.innerText = `🚀 Compiling Android Paths & Dependencies (${width}%)`;
+                    status.innerText = `🔍 Vision AI Analyzing Screenshot & Code (${width}%)`;
                 }
             }, 800);
 
             try {
-                // 1. Generate UI index.html via Groq
-                const systemInstruction = "You are an expert mobile app UI designer. Create a fully self-contained, responsive HTML/JS app using Tailwind CSS via CDN. Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown blocks.";
+                let messagesContent = [];
+                let selectedModel = "llama-3.3-70b-versatile";
+
+                // If image is uploaded, use Vision Model & Base64 payload
+                if (imageFile) {
+                    selectedModel = "llama-3.2-11b-vision-preview";
+                    const base64Image = await convertImageToBase64(imageFile);
+                    
+                    messagesContent = [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: `Analyze this UI screenshot carefully. Fix any missing parts (like arithmetic buttons +, -, *, / in calculators or missing grid elements) and write a complete, fully functional standalone single-file HTML/JS app using Tailwind CSS via CDN matching or improving this design. Output ONLY valid HTML starting with <!DOCTYPE html> and ending with </html> without markdown blocks. User instruction: ${promptText || "Fix and replicate this UI accurately."}`
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: { url: base64Image }
+                                }
+                            ]
+                        }
+                    ];
+                } else {
+                    // Standard Text Prompt with strict 4-column layout rule
+                    messagesContent = [
+                        {
+                            role: "system",
+                            content: "You are an expert mobile app UI designer. Create a fully self-contained, responsive HTML/JS app using Tailwind CSS via CDN. For any calculator or grid, use a 4-column layout with all arithmetic buttons (+, -, *, /, C, =). Output ONLY valid HTML code starting with <!DOCTYPE html> and ending with </html> without markdown blocks."
+                        },
+                        {
+                            role: "user",
+                            content: promptText
+                        }
+                    ];
+                }
 
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqApiKey}` },
                     body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [
-                            { role: "system", content: systemInstruction },
-                            { role: "user", content: promptText }
-                        ],
-                        temperature: 0.7
+                        model: selectedModel,
+                        messages: messagesContent,
+                        temperature: 0.7,
+                        max_tokens: 4096
                     })
                 });
 
                 const data = await response.json();
-                if(data.error) throw new Error(data.error.message || "Groq API Error");
+                if(data.error) throw new Error(data.error.message || "Groq Vision API Error");
 
                 let rawHtml = data.choices[0].message.content;
                 appFiles.indexHtml = rawHtml.replace(/```html/g, '').replace(/```/g, '').trim();
 
-                // 2. Full Android Project Structure with Complete Paths and Dependencies
-                appFiles.androidManifest = `<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.viziahub.app">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="Viziahub App" android:usesCleartextTraffic="true" android:theme="@style/Theme.AppCompat.NoActionBar">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>`;
+                // Android project structure files
+                appFiles.androidManifest = `<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.viziahub.app">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="Viziahub App" android:usesCleartextTraffic="true" android:theme="@style/Theme.AppCompat.NoActionBar">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>`;
                 
                 appFiles.mainActivity = `package com.viziahub.app;\nimport android.os.Bundle;\nimport android.webkit.WebView;\nimport android.webkit.WebViewClient;\nimport androidx.appcompat.app.AppCompatActivity;\npublic class MainActivity extends AppCompatActivity {\n    private WebView webView;\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        webView = new WebView(this);\n        webView.getSettings().setJavaScriptEnabled(true);\n        webView.getSettings().setDomStorageEnabled(true);\n        webView.getSettings().setAllowFileAccess(true);\n        webView.setWebViewClient(new WebViewClient());\n        webView.loadUrl("file:///android_asset/index.html");\n        setContentView(webView);\n    }\n}`;
 
@@ -214,7 +264,6 @@
 
                 appFiles.settingsGradle = `rootProject.name = "${ghRepoName}";\ninclude ':app'`;
 
-                // **Complete GitHub Actions build.yml with accurate Gradle Wrapper & Android Build Steps**
                 appFiles.buildYml = `name: Build ViziaHub Android APK\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - name: Checkout Repository\n      uses: actions/checkout@v4\n    - name: Set up JDK 17\n      uses: actions/setup-java@v4\n      with:\n        distribution: 'temurin'\n        java-version: '17'\n    - name: Setup Gradle\n      uses: gradle/actions/setup-gradle@v3\n    - name: Build Debug APK with Gradle\n      run: gradle assembleDebug\n    - name: Upload APK Artifact\n      uses: actions/upload-artifact@v4\n      with:\n        name: ViziaHub-Debug-APK\n        path: app/build/outputs/apk/debug/app-debug.apk`;
 
                 // Save to LocalStorage
@@ -248,13 +297,13 @@
                     }
                 }
 
-                // 3. Push everything to correct Android paths on GitHub
-                status.innerText = "☁️ Pushing to exact Android paths & workflow on GitHub...";
+                // Push to GitHub
+                status.innerText = "☁️ Pushing Vision-fixed files to GitHub...";
                 await pushFilesToGitHub(customPath, customFileContent);
 
                 clearInterval(progressInterval);
                 progressBar.style.width = "100%";
-                status.innerText = "✅ Pipeline Triggered! GitHub Actions is building your APK.";
+                status.innerText = "✅ Pipeline Triggered! Vision AI has fixed and deployed all buttons.";
                 document.getElementById('previewContainer').classList.remove('hidden');
                 showRealDownloadButton();
 
@@ -270,18 +319,16 @@
         async function pushFilesToGitHub(customPath, customContent) {
             const repo = `${ghUser}/${ghRepoName}`;
             
-            // Push exact Android Directory Paths & Workflow
-            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update app assets index.html");
+            await uploadFile(repo, "app/src/main/assets/index.html", appFiles.indexHtml, "Update index.html via Vision AI");
             await uploadFile(repo, "app/src/main/AndroidManifest.xml", appFiles.androidManifest, "Update AndroidManifest.xml");
             await uploadFile(repo, "app/src/main/java/com/viziahub/app/MainActivity.java", appFiles.mainActivity, "Update MainActivity.java");
             await uploadFile(repo, "app/build.gradle", appFiles.buildGradleApp, "Update app-level build.gradle");
             await uploadFile(repo, "build.gradle", appFiles.buildGradleRoot, "Update root-level build.gradle");
             await uploadFile(repo, "settings.gradle", appFiles.settingsGradle, "Update settings.gradle");
-            await uploadFile(repo, ".github/workflows/build.yml", appFiles.buildYml, "Add GitHub Actions workflow build.yml");
+            await uploadFile(repo, ".github/workflows/build.yml", appFiles.buildYml, "Update workflow build.yml");
 
-            // Push Custom File to exact requested path if specified
             if(customPath && customContent) {
-                await uploadFile(repo, customPath, customContent, `Add custom Android file: ${customPath}`);
+                await uploadFile(repo, customPath, customContent, `Add custom file: ${customPath}`);
             }
         }
 
