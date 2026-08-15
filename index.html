@@ -3,151 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viziahub Pro Engine</title>
-    <!-- Tailwind CSS for high-level modern UI -->
+    <title>Viziahub Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-6 flex flex-col items-center">
+<body class="bg-gray-900 text-white p-5">
 
-    <div class="w-full max-w-lg bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl">
-        <h1 class="text-2xl font-black text-cyan-400 mb-6 text-center">Viziahub Pro Engine (Groq)</h1>
+    <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-xl shadow-xl">
+        <h1 class="text-xl font-bold mb-4">Viziahub Pro</h1>
+        <button onclick="document.getElementById('settings').classList.toggle('hidden')" class="w-full bg-gray-700 p-2 mb-4 rounded">⚙️ API Settings</button>
         
-        <!-- API Settings Button -->
-        <button onclick="toggleSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold p-3 rounded-xl mb-4 border border-slate-700 transition">⚙️ Set Groq API Key</button>
-
-        <!-- Prompt Input -->
-        <label class="block text-sm font-medium text-slate-300 mb-2">App Description & Features</label>
-        <textarea id="aiPrompt" class="w-full h-36 bg-slate-950 border border-slate-800 p-4 rounded-xl text-white focus:ring-2 focus:ring-cyan-500 outline-none resize-none mb-4 text-sm" placeholder="e.g. TikTok clone with vertical scrolling reels, video upload, profile page..."></textarea>
-        
-        <!-- Build Button -->
-        <button id="genBtn" onclick="buildApp()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold p-4 rounded-xl transition shadow-lg shadow-cyan-900/30 mb-4">🚀 Build & Pack Pro App</button>
-        
-        <!-- Download Released App Button -->
-        <button id="dlBtn" onclick="downloadAppFile()" disabled class="w-full bg-emerald-600/50 text-white/50 font-bold p-4 rounded-xl cursor-not-allowed transition">📥 Download Released App (.html)</button>
-        
-        <p id="status" class="text-center mt-4 text-xs text-slate-400">Status: Ready to build</p>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm p-6 rounded-2xl">
-            <h2 class="text-lg font-bold text-cyan-400 mb-4">Groq API Configuration</h2>
-            <input type="password" id="groqKey" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white mb-4 outline-none focus:border-cyan-500" placeholder="Paste Groq API Key">
-            <button onclick="saveKey()" class="w-full bg-cyan-600 font-bold p-3 rounded-xl mb-2">Save Key</button>
-            <button onclick="toggleSettings()" class="w-full bg-slate-800 text-slate-300 p-3 rounded-xl">Close</button>
+        <div id="settings" class="hidden mb-4">
+            <input type="password" id="apiKey" placeholder="Enter Groq API Key" class="w-full p-2 text-black rounded mb-2">
+            <button onclick="saveKey()" class="w-full bg-blue-600 p-2 rounded">Save Key</button>
         </div>
+
+        <textarea id="prompt" class="w-full h-32 p-2 text-black rounded mb-4" placeholder="App idea..."></textarea>
+        <button id="buildBtn" onclick="runBuild()" class="w-full bg-green-600 p-4 rounded font-bold">🚀 Build App</button>
+        <button id="dlBtn" disabled onclick="downloadFile()" class="w-full mt-2 bg-gray-500 p-4 rounded font-bold">📥 Download</button>
+        <p id="msg" class="mt-4 text-xs text-gray-400 text-center">Ready</p>
     </div>
 
-    <!-- Hidden Master Storage (Safe Escape) -->
-    <textarea id="masterCode" style="display:none;"></textarea>
+    <textarea id="hiddenCode" class="hidden"></textarea>
 
     <script>
-        window.onload = function() {
-            if(localStorage.getItem('groq_key')) {
-                document.getElementById('groqKey').value = localStorage.getItem('groq_key');
-            }
-        }
-
-        function toggleSettings() {
-            const modal = document.getElementById('settingsModal');
-            modal.classList.toggle('hidden');
-        }
-
         function saveKey() {
-            const key = document.getElementById('groqKey').value;
-            localStorage.setItem('groq_key', key.trim());
-            alert("Groq API Key Saved Successfully!");
-            toggleSettings();
+            localStorage.setItem('groq_key', document.getElementById('apiKey').value);
+            alert("Saved!");
         }
+        
+        document.getElementById('apiKey').value = localStorage.getItem('groq_key') || '';
 
-        async function buildApp() {
-            const apiKey = localStorage.getItem('groq_key');
-            const promptText = document.getElementById('aiPrompt').value;
-            const genBtn = document.getElementById('genBtn');
-            const dlBtn = document.getElementById('dlBtn');
-            const status = document.getElementById('status');
-
-            if(!apiKey) {
-                alert("Pehle Settings me jaakar Groq API Key save karo!");
-                toggleSettings();
-                return;
-            }
-            if(!promptText) {
-                alert("Bhai, app ka idea toh likh!");
-                return;
-            }
-
-            genBtn.innerText = "Building Pro App...";
-            genBtn.disabled = true;
-            status.innerText = "Status: Connecting to Groq AI...";
-
-            const systemPrompt = "You are an elite senior full-stack and UI/UX app developer. Create a fully functional, gorgeous, professional single-file mobile web app based on the user's request. 1. You MUST include the Tailwind CSS CDN script (<script src=\"https://cdn.tailwindcss.com\"></script>) inside the <head>. 2. Design a gorgeous, modern mobile-first interface with proper styling and layout. 3. Embed clean working JavaScript for full interactivity. 4. Output ONLY raw, clean HTML code without any markdown ticks like ```html or conversational text.";
+        async function runBuild() {
+            const btn = document.getElementById('buildBtn');
+            const msg = document.getElementById('msg');
+            const key = localStorage.getItem('groq_key');
+            
+            if(!key) return alert("API Key missing!");
+            
+            btn.innerText = "Building...";
+            msg.innerText = "Processing...";
 
             try {
-                const response = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
                     body: JSON.stringify({
                         model: "llama-3.3-70b-versatile",
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: promptText }
-                        ],
-                        temperature: 0.5,
-                        max_tokens: 4000
+                        messages: [{role: "system", content: "Write only valid HTML/Tailwind code. No markdown, no intro."}, {role: "user", content: document.getElementById('prompt').value}]
                     })
                 });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error?.message || `HTTP Error: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    throw new Error("Invalid API response structure received.");
-                }
-
-                let packedCode = data.choices[0].message.content;
-                
-                // Clean markdown ticks safely
-                packedCode = packedCode.replace(/```html/gi, "").replace(/```/g, "").trim();
-
-                document.getElementById('masterCode').value = packedCode;
-
-                dlBtn.disabled = false;
-                dlBtn.classList.remove("bg-emerald-600/50", "text-white/50", "cursor-not-allowed");
-                dlBtn.classList.add("bg-emerald-600", "hover:bg-emerald-500", "shadow-lg", "shadow-emerald-900/30");
-                
-                status.innerText = "Status: Pro App successfully built and ready!";
-            } catch (error) {
-                console.error(error);
-                status.innerText = "Error Log: " + error.message;
-            } finally {
-                genBtn.innerText = "🚀 Build & Pack Pro App";
-                genBtn.disabled = false;
+                const data = await res.json();
+                const code = data.choices[0].message.content.replace(/```html|```/g, "");
+                document.getElementById('hiddenCode').value = code;
+                document.getElementById('dlBtn').disabled = false;
+                document.getElementById('dlBtn').className = "w-full mt-2 bg-green-700 p-4 rounded font-bold";
+                msg.innerText = "Done!";
+            } catch(e) {
+                msg.innerText = "Error: " + e.message;
             }
+            btn.innerText = "🚀 Build App";
         }
 
-        function downloadAppFile() {
-            const code = document.getElementById('masterCode').value;
-            if(!code) {
-                alert("Pehle app build toh karo!");
-                return;
-            }
-
-            const blob = new Blob([code], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
+        function downloadFile() {
+            const blob = new Blob([document.getElementById('hiddenCode').value], {type: 'text/html'});
             const a = document.createElement('a');
-            a.href = url;
-            a.download = "Viziahub_Pro_App.html";
-            document.body.appendChild(a);
+            a.href = URL.createObjectURL(blob);
+            a.download = "app.html";
             a.click();
-            document.body.removeChild(a);
         }
     </script>
 </body>
