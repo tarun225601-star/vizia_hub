@@ -1,7 +1,5 @@
 name: Build Flutter APK
-
 on: [push]
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,7 +13,7 @@ jobs:
         with:
           flutter-version: '3.19.0'
       - run: flutter pub get
-      # --flavor हटा दिया है क्योंकि तुम्हारे प्रोजेक्ट में फ्लेवर नहीं है
+      # यहाँ सिर्फ बिल्ड कमांड है, फ्लेवर का कोई चक्कर नहीं है
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
