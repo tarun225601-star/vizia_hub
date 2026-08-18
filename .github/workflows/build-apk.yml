@@ -22,7 +22,7 @@ jobs:
       run: |
         mkdir -p app/src/main/assets app/src/main/java/com/viziag/app app/src/main/res/values
         
-        # AndroidManifest.xml बनाना जिसमें इंटरनेट की परमिशन हो
+        # AndroidManifest.xml बनाना
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             package="com.viziag.app">
@@ -42,7 +42,7 @@ jobs:
         </manifest>
         EOF
 
-        # MainActivity.java बनाना जो index.html को लोड करेगा
+        # MainActivity.java बनाना
         cat << 'EOF' > app/src/main/java/com/viziag/app/MainActivity.java
         package com.viziag.app;
         import android.os.Bundle;
@@ -63,41 +63,44 @@ jobs:
         }
         EOF
 
-        # index.html को assets फोल्डर में मूव करना
+        # index.html को assets में डालना
         mv index.html app/src/main/assets/
 
-        # build.gradle फाइल्स तैयार करना
-        echo "include ':app'" > settings.gradle
-
-        cat << 'EOF' > build.gradle
-        buildscript {
+        # Settings.gradle (Modern Plugin Management के साथ)
+        cat << 'EOF' > settings.gradle
+        pluginManagement {
             repositories {
                 google()
                 mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:7.4.2'
+                gradlePluginPortal()
             }
         }
-        allprojects {
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
             repositories {
                 google()
                 mavenCentral()
             }
         }
+        rootProject.name = "ViziagApp"
+        include ':app'
         EOF
 
+        # Root build.gradle को खाली या सिर्फ plugins के साथ रखना
+        echo "// Top-level build file" > build.gradle
+
+        # App level build.gradle (Modern AGP 8.1.0)
         cat << 'EOF' > app/build.gradle
         plugins {
             id 'com.android.application'
         }
         android {
             namespace 'com.viziag.app'
-            compileSdk 33
+            compileSdk 34
             defaultConfig {
                 applicationId "com.viziag.app"
                 minSdk 21
-                targetSdk 33
+                targetSdk 34
                 versionCode 1
                 versionName "1.0"
             }
@@ -107,7 +110,19 @@ jobs:
         }
         EOF
 
-        # Gradle Wrapper जनरेट करना
+        # gradle-wrapper.properties सेट करना ताकि सही वर्शन आए
+        mkdir -p gradle/wrapper
+        cat << 'EOF' > gradle/wrapper/gradle-wrapper.properties
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+
+        # Gradle Wrapper खुद जनरेट करना
         gradle wrapper
 
     - name: Build APK with Gradle
