@@ -70,7 +70,7 @@
                     <input type="password" id="m_groq" placeholder="gsk_..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
                 </div>
 
-                <!-- Vercel Token Added Here -->
+                <!-- Vercel Token -->
                 <div>
                     <label class="text-[10px] uppercase text-cyan-400 font-bold">🚀 Vercel Token</label>
                     <input type="password" id="m_vercel" placeholder="Enter Vercel deployment token..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
@@ -84,7 +84,7 @@
                     </div>
                 </div>
 
-                <!-- Selected Project File Viewer (Only index.html + VIP Copy Button) -->
+                <!-- Selected Project File Viewer -->
                 <div id="projectDetailView" class="hidden border-t border-gray-800 pt-3 space-y-2">
                     <div class="flex justify-between items-center">
                         <h4 id="detailProjectTitle" class="text-xs font-bold text-emerald-400"></h4>
@@ -117,7 +117,8 @@
     </footer>
 
     <script>
-        const SELECTED_MODEL = "llama-3.3-70b-versatile";
+        // Updated to stable Groq model
+        const SELECTED_MODEL = "llama-3.1-8b-instant";
 
         let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
         let vercelToken = localStorage.getItem('viziahub_vercel_token') || '';
@@ -164,7 +165,6 @@
             alert("🔗 Instant Web Link Copied!");
         }
 
-        // VIP Copy Code Functionality
         function copyActiveCode() {
             const codeBox = document.getElementById('fileViewerCode');
             if(!codeBox.value) return alert("Copy karne ke liye koi code nahi hai bhai!");
@@ -281,7 +281,6 @@
 
                 const indexHtml = data.choices[0].message.content.replace(/```html/g, '').replace(/```[a-z]*/g, '').replace(/```/g, '').trim();
 
-                // Save only index.html into Vault Storage
                 projectsVault[projectName] = {
                     indexHtml: indexHtml
                 };
