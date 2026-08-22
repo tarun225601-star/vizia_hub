@@ -70,6 +70,12 @@
                     <input type="password" id="m_groq" placeholder="gsk_..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
                 </div>
 
+                <!-- Vercel Token Added Here -->
+                <div>
+                    <label class="text-[10px] uppercase text-cyan-400 font-bold">🚀 Vercel Token</label>
+                    <input type="password" id="m_vercel" placeholder="Enter Vercel deployment token..." class="w-full bg-gray-950 p-2.5 rounded-lg border border-gray-700 text-sm text-white">
+                </div>
+
                 <!-- Saved Projects Vault Section -->
                 <div class="border-t border-gray-800 pt-3">
                     <h3 class="text-xs uppercase text-cyan-400 font-bold mb-2">📂 Saved Projects & Vault Files</h3>
@@ -100,7 +106,7 @@
             
             <div class="flex gap-2 pt-2 border-t border-gray-800">
                 <button onclick="toggleSettings()" class="flex-1 bg-gray-800 hover:bg-gray-700 py-2.5 rounded-xl text-sm font-semibold text-gray-300">Close</button>
-                <button onclick="saveSettings()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-cyan-600/20">Save API Key</button>
+                <button onclick="saveSettings()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-cyan-600/20">Save Settings</button>
             </div>
         </div>
     </div>
@@ -114,6 +120,7 @@
         const SELECTED_MODEL = "llama-3.3-70b-versatile";
 
         let groqApiKey = localStorage.getItem('viziahub_groq_key') || '';
+        let vercelToken = localStorage.getItem('viziahub_vercel_token') || '';
         let projectsVault = JSON.parse(localStorage.getItem('viz_projects_vault') || '{}');
         let currentActiveProject = localStorage.getItem('viz_active_project') || '';
         let generatedBlobUrl = "";
@@ -130,14 +137,20 @@
             modal.classList.toggle('hidden');
             if(!modal.classList.contains('hidden')) {
                 document.getElementById('m_groq').value = localStorage.getItem('viziahub_groq_key') || '';
+                document.getElementById('m_vercel').value = localStorage.getItem('viziahub_vercel_token') || '';
                 renderProjectList();
             }
         }
 
         function saveSettings() {
             localStorage.setItem('viziahub_groq_key', document.getElementById('m_groq').value.trim());
+            localStorage.setItem('viziahub_vercel_token', document.getElementById('m_vercel').value.trim());
+            
             groqApiKey = localStorage.getItem('viziahub_groq_key');
-            alert("API Key Saved Successfully!");
+            vercelToken = localStorage.getItem('viziahub_vercel_token');
+            
+            alert("Settings Saved Successfully!");
+            toggleSettings();
         }
 
         function createBlobUrl(htmlContent) {
